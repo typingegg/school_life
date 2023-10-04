@@ -1,0 +1,564 @@
+---
+title: "Olympics from 1896 to 2016"
+author: "Eugene Garvilles"
+date: "`r Sys.Date()`"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: columns
+    vertical_layout: fill
+---
+
+```{r global, echo=FALSE}
+library(flexdashboard)
+library(dplyr)
+library(ggplot2)
+```
+
+# The Olympics
+
+## Overview
+
+**Overview**
+
+-   Taken from Kaggle.
+
+-   The dataset has two files: athletes_events and regions.
+
+-   Total of 18 columns for both datasets.
+
+-   Height is in centimeters and weight is in kilograms.
+
+**Required Libraries**
+
+-   library(flexdashboard): Provides interactive dashboards using rmarkdown.
+
+-   library(dplyr): Data manipulation library.
+
+-   library(ggplot2): A visualization library.
+
+## Reading in Data {data-width = 650}
+
+**Reading in the Data**
+
+athlete_events \<- read.csv("athlete_events.csv")
+
+NOC_regions \<- read.csv("noc_regions.csv")
+
+Olympics \<- merge(x = athlete_events, y = NOC_regions, by = "NOC") str(Olympics)
+
+```{r}
+athlete_events <- read.csv("athlete_events.csv")
+
+NOC_regions <- read.csv("noc_regions.csv")
+
+Olympics <- merge(x = athlete_events, y = NOC_regions, by = "NOC")
+str(Olympics)
+```
+
+# Count Males and Females
+
+**Count the number of Participants and Unique Participants**
+
+Olympics %\>%
+
+summarise(Participants = n(), Unique_Participants = n_distinct(Name))
+
+```{r}
+Olympics %>% summarise(Participants = n(), Unique_Participants = n_distinct(Name))
+```
+
+**Count the number of males and females that participated from 1896 to 2016**
+
+Olympics %\>%
+
+count(Sex)
+
+```{r, echo = FALSE}
+Olympics %>% 
+  count(Sex)
+```
+
+# Plot Male and Female
+
+## Column 1 {data-width = 400}
+
+### **Figure 1. Male and Female Demographics from 1896 to 2016**
+
+Olympics %\>%
+
+group_by(Year, Sex) %\>%
+
+summarise(Sports = n_distinct(Sport)) %\>%
+
+ggplot(mapping = aes(x = Year, y = Sports, color = Sex)) +
+
+geom_line() +
+
+geom_smooth(se = FALSE) +
+
+labs(x = element_blank(), y = "Sports") +
+
+theme_minimal()+
+
+theme(plot.title = element_text(hjust = 0.5),
+
+panel.border = element_blank(),
+
+panel.grid.major.x = element_blank(),
+
+panel.grid.minor.x = element_blank(),
+
+panel.grid.minor.y = element_blank())
+
+### **Figure 2. Plotting Height and Weight Between Male and Female Groups**
+
+ann_text \<- data.frame(Height = c(175, 130, 175),
+
+Weight = c(160, 50, 220),
+
+Sex = c("F", "F", "M"),
+
+label = c("this,", "This,", "and this."))
+
+ggplot(data = Olympics, mapping = aes(x = Height, y = Weight)) +
+
+geom_point(show.legend = FALSE, alpha = 1/10) +
+
+facet_wrap(\~Sex) +
+
+theme_light()+
+
+theme(plot.title = element_text(hjust = 0.5),
+
+panel.border = element_blank(),
+
+panel.grid.minor.x = element_blank(),
+
+panel.grid.minor.y = element_blank()) +
+
+geom_text(data = ann_text,label=ann_text\$label)
+
+## Column 2 {data-width = 600, .tabset}
+
+### **Figure 1**
+
+```{r, echo = FALSE}
+  Olympics %>% 
+  group_by(Year, Sex) %>% 
+  summarise(Sports = n_distinct(Sport)) %>% 
+  ggplot(mapping = aes(x = Year, y = Sports, color = Sex)) +
+  geom_line() +
+  geom_smooth(se = FALSE) +
+  labs(x = element_blank(),
+       y = "Sports") +
+  theme_minimal()+
+  theme(plot.title = element_text(hjust = 0.5),
+        panel.border = element_blank(),
+        panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank(),
+        panel.grid.minor.y = element_blank())
+    
+```
+
+### **Figure 2**
+
+```{r, echo = FALSE}
+ann_text <- data.frame(Height = c(175, 130, 175), Weight = c(160, 50, 220), Sex = c("F", "F", "M"), label = c("this,", "This,", "and this."))
+
+ggplot(data = Olympics, mapping = aes(x = Height, y = Weight)) +
+  geom_point(show.legend = FALSE, alpha = 1/10) +
+  facet_wrap(~Sex) +
+  theme_light()+
+  theme(plot.title = element_text(hjust = 0.5),
+        panel.border = element_blank(),
+        panel.grid.minor.x = element_blank(),
+        panel.grid.minor.y = element_blank()) +
+  geom_text(data = ann_text,label=ann_text$label)
+```
+
+# Outliers
+
+**Outlier 1**
+
+Olympics %\>%
+
+filter(Weight \>150 & Sex == "F") %\>%
+
+select(Name, Sex, Age, Height, Year, Event, region, Medal)
+
+```{r, echo = FALSE}
+Olympics %>% 
+  filter(Weight >150 & Sex == "F") %>% 
+  select(Name, Sex, Age, Height, Year, Event, region, Medal)
+```
+
+**Outlier 2**
+
+Olympics %\>%
+
+filter(Height \< 130 & Sex == "F") %\>%
+
+select(Name, Sex, Age, Height, Year, Event, region, Medal)
+
+```{r, echo = FALSE}
+Olympics %>% 
+  filter(Height < 130 & Sex == "F") %>% 
+  select(Name, Sex, Age, Height, Year, Event, region, Medal)
+```
+
+**Outlier 3**
+
+Olympics %\>%
+
+filter(Weight \> 200 & Sex == "M") %\>%
+
+select(Name, Sex, Age, Height, Year, Event, region, Medal)
+
+```{r, echo = FALSE}
+Olympics %>% 
+  filter(Weight > 200 & Sex == "M") %>% 
+  select(Name, Sex, Age, Height, Year, Event, region, Medal)
+```
+
+# Medalists
+
+## Column 1 {data-width = 100}
+
+**Count the number of medals received by countries**
+
+Olympics %\>%
+
+filter(!is.na(Medal)) %\>%
+
+group_by(region) %\>%
+
+count(region, sort = TRUE)
+
+```{r, echo = FALSE}
+Olympics %>% 
+  filter(!is.na(Medal)) %>% 
+  group_by(region) %>% 
+  count(region, sort = TRUE)
+```
+
+## Column 2 {data-width = 900}
+
+**Plot the count of medals**
+
+Olympics %\>%
+
+filter(!is.na(Medal)) %\>%
+
+filter(region %in% c("USA", "Russia", "Germany", "UK", "France")) %\>%
+
+ggplot(mapping = aes(x = region, fill = region)) +
+
+geom_bar(show.legend = TRUE) +
+
+facet_wrap(\~factor(Medal, levels = c("Gold", "Silver", "Bronze"))) +
+
+labs(title = "Medal Holders", x = "Countries", y = "Number of Medalists") +
+
+theme_light()+
+
+theme(plot.title = element_text(hjust = 0.5),
+
+axis.text.x = element_blank(),
+
+axis.ticks = element_blank(),
+
+panel.border = element_blank(),
+
+panel.grid.major.x = element_blank(),
+
+panel.grid.minor.x = element_blank(),
+
+panel.grid.minor.y = element_blank())
+
+```{r, echo = FALSE}
+Olympics %>% 
+  filter(!is.na(Medal)) %>% 
+  filter(region %in% c("USA", "Russia", "Germany", "UK", "France")) %>% 
+  ggplot(mapping = aes(x = region, fill = region)) +
+  geom_bar(show.legend = TRUE) +
+  facet_wrap(~factor(Medal, levels = c("Gold", "Silver", "Bronze"))) + 
+  labs(title = "Medal Holders",
+       x = "Countries",
+       y = "Number of Medalists") +
+  theme_light()+
+  theme(plot.title = element_text(hjust = 0.5),
+        axis.text.x = element_blank(),
+        axis.ticks = element_blank(),
+        panel.border = element_blank(),
+        panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank(),
+        panel.grid.minor.y = element_blank())
+```
+
+# Age
+
+## Column 1 {data-width = 650}
+
+### Analyzing Age
+
+**Display statistics about age**
+
+summary(Olympics\$Age)
+
+```{r, echo = FALSE}
+summary(Olympics$Age)
+```
+
+**Display details of 10 and 97 year-old athletes**
+
+Olympics %\>%
+
+filter(Age == 10 \| Age == 97) %\>%
+
+select(Name, Sex, Age, Height, Year, Event, region, Medal)
+
+```{r, echo = FALSE}
+Olympics %>% 
+  filter(Age == 10 | Age == 97) %>% 
+  select(Name, Sex, Age, Height, Year, Event, region, Medal)
+```
+
+**Figure 1. Plot of Mean Age per Year from 1896 to 2016**
+
+Olympics %\>%
+
+filter(!is.na(Age)) %\>%
+
+group_by(Year) %\>%
+
+summarise(mean_Age = mean(Age)) %\>%
+
+ggplot(mapping = aes(x = Year, y = mean_Age)) +
+
+geom_point() +
+
+geom_smooth() +
+
+coord_cartesian(ylim = c(22,36)) +
+
+labs(title = "Mean Age of All Olympics Participants from 1896 to 2016", x = "Years", y = "Mean Age") +
+
+theme_light()+
+
+theme(plot.title = element_text(hjust = 0.5),
+
+axis.ticks = element_blank(),
+
+panel.border = element_blank(),
+
+panel.grid.major.x = element_blank(),
+
+panel.grid.minor.x = element_blank(),
+
+panel.grid.minor.y = element_blank())
+
+**Build categories to better understand age composition**
+
+Olympics2 \<- Olympics %\>%
+
+mutate(Age_Cat = ifelse(Age \>=10 & Age \<20, "10-19",
+
+ifelse(Age \>=20 & Age \<30, "20-29",
+
+ifelse(Age \>=30 & Age \<40, "30-39",
+
+ifelse(Age \>=40 & Age \<50, "40-49",
+
+ifelse(Age \>= 50, "Over 50", NA))))))
+
+head(Olympics2)
+
+```{r}
+Olympics2 <- Olympics %>% 
+  mutate(Age_Cat =
+  ifelse(Age >=10 & Age <20, "10-19",
+         ifelse(Age >=20 & Age <30, "20-29",
+                ifelse(Age >=30 & Age <40, "30-39",
+                       ifelse(Age >=40 & Age <50, "40-49",
+                              ifelse(Age >= 50, "Over 50",
+                              NA))))))
+
+head(Olympics2)
+```
+
+**Figure 2. Plot according to Age Categories**
+
+Olympics2 %\>%
+
+filter(!is.na(Age)) %\>%
+
+ggplot(mapping = aes(x = Sex, y = Age,fill = Sex)) +
+
+geom_col() +
+
+facet_grid(\~Age_Cat) +
+
+labs(title = "Male and Female Distribution according to Age Category", x = element_blank(), y = element_blank()) +
+
+theme_light()+
+
+theme(plot.title = element_text(hjust = 0.5),
+
+axis.text = element_blank(),
+
+axis.ticks = element_blank(),
+
+panel.border = element_blank(),
+
+panel.grid.major.x = element_blank(),
+
+panel.grid.minor.x = element_blank(),
+
+panel.grid.minor.y = element_blank(),
+
+panel.grid.major.y = element_blank())
+
+## Column 2 {data-width = 350, .tabset}
+
+### **Figure 1**
+
+```{r, echo = FALSE}
+Olympics %>% 
+  filter(!is.na(Age)) %>%
+  group_by(Year) %>% 
+  summarise(mean_Age = mean(Age)) %>% 
+  ggplot(mapping = aes(x = Year, y = mean_Age)) +
+  geom_point() +
+  geom_smooth() +
+  coord_cartesian(ylim = c(22,36)) +
+  labs(title = "Mean Age of All Olympics Participants from 1896 to 2016",
+       x = "Years",
+       y = "Age") +
+  theme_light()+
+  theme(plot.title = element_text(hjust = 0.5),
+        axis.ticks = element_blank(),
+        panel.border = element_blank(),
+        panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank(),
+        panel.grid.minor.y = element_blank())
+```
+
+### **Figure 2**
+
+```{r, echo = FALSE}
+Olympics2 %>% 
+  filter(!is.na(Age)) %>% 
+  ggplot(mapping = aes(x = Sex, y = Age,fill = Sex)) +
+  geom_col() +
+  facet_grid(~Age_Cat) +
+  labs(title = "Male and Female Distribution according to Age Category",
+       x = element_blank(),
+       y = element_blank()) +
+  theme_light()+
+  theme(plot.title = element_text(hjust = 0.5),
+        axis.text = element_blank(),
+        axis.ticks = element_blank(),
+        panel.border = element_blank(),
+        panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank(),
+        panel.grid.minor.y = element_blank(),
+        panel.grid.major.y = element_blank())
+```
+
+# Swimming
+
+## Column 1 {data-width = 400}
+
+**Boxplot of Age in Swimming Sports**
+
+Olympics %\>%
+
+filter(!is.na(Medal) & Sport == "Swimming") %\>%
+
+ggplot(mapping = aes(x = Medal, y = Age, fill = Medal)) +
+
+geom_boxplot(show.legend = FALSE) +
+
+facet_grid(\~Sex) +
+
+labs(title = "Age of Medalists from 1896 to 2016 in Swimming", x = "Medals", y = "Age") +
+
+theme_light() +
+
+theme(plot.title = element_text(hjust = 0.5),
+
+axis.ticks = element_blank(),
+
+panel.border = element_blank(),
+
+panel.grid.major.x = element_blank(),
+
+panel.grid.minor.x = element_blank())
+
+## Column 2{data-width = 600}
+
+```{r, echo = FALSE}
+Olympics %>% 
+  filter(!is.na(Medal) & Sport == "Swimming") %>% 
+  ggplot(mapping = aes(x = Medal, y = Age, fill = Medal)) +
+  geom_boxplot(show.legend = FALSE) +
+  facet_grid(~Sex) +
+  labs(title = "Age of Medalists from 1896 to 2016 in Swimming",
+       x = "Medals",
+       y = "Age") +
+  theme_light()+
+  theme(plot.title = element_text(hjust = 0.5),
+        axis.ticks = element_blank(),
+        panel.border = element_blank(),
+        panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank())
+```
+
+# Gymnastics
+
+## Column 1{data-width = 400}
+
+**Boxplot of Age in Gymnastics Sports**
+
+Olympics %\>%
+
+filter(!is.na(Medal) & Sport == "Gymnastics") %\>%
+
+ggplot(mapping = aes(x = Medal, y = Age, fill = Medal)) +
+
+geom_boxplot(show.legend = FALSE) +
+
+facet_grid(\~Sex) +
+
+labs(title = "Age of Medalists from 1896 to 2016 in Gymnastics", x = "Medals", y = "Age") +
+
+theme_light()+
+
+theme(plot.title = element_text(hjust = 0.5),
+
+axis.ticks = element_blank(),
+
+panel.border = element_blank(),
+
+panel.grid.major.x = element_blank(),
+
+panel.grid.minor.x = element_blank())
+
+## Column 2{data-width = 600}
+
+```{r, echo = FALSE}
+Olympics %>% 
+  filter(!is.na(Medal) & Sport == "Gymnastics") %>% 
+  ggplot(mapping = aes(x = Medal, y = Age, fill = Medal)) +
+  geom_boxplot(show.legend = FALSE) +
+  facet_grid(~Sex) +
+  labs(title = "Age of Medalists from 1896 to 2016 in Gymnastics",
+       x = "Medals",
+       y = "Age") +
+  theme_light()+
+  theme(plot.title = element_text(hjust = 0.5),
+        axis.ticks = element_blank(),
+        panel.border = element_blank(),
+        panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank())
+```
