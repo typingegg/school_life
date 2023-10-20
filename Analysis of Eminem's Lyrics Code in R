@@ -1,0 +1,207 @@
+#Eminem important questions
+library(dplyr)
+library(ggplot2)
+#unfiltered total unique words
+
+glimpse(eminem_all_albums_tidy)
+str(eminem_all_albums_tidy)
+
+#full word count
+
+eminem_all_albums_raw
+eminem_all_albums_tidy
+full_word_count <- eminem_all_albums_raw%>%
+  unnest_tokens(word, text) %>%
+  group_by(Song_Name, Album_Name) %>% 
+  summarise(num_words = n()) %>%
+  arrange(desc(num_words)) 
+full_word_count
+
+#percentage of "love", "music", "crazy", "time"
+#percentage without stop words
+
+eminem_all_albums_tidy <- eminem_all_albums_raw %>% unnest_tokens(word, text) %>%
+  plyr::mutate(word = str_extract(word, "[a-z']+")) %>%
+  na.omit()
+
+eminem_all_albums_freq <- eminem_all_albums_tidy  %>% count(word, sort=TRUE)
+
+head(eminem_all_albums_freq)
+
+
+eminem_all_albums_freq %>% 
+  filter(word %in% c("love", "time", "music", "crazy", "eminem")) %>% 
+  ggplot(mapping = aes(x = word, y = n, fill = word)) +
+  geom_col() +
+  scale_fill_manual(values = cols) +
+  theme_classic()
+  
+#percentage with stop words
+eminem_all_albums_tidy <- eminem_all_albums_raw %>% unnest_tokens(word, text) %>%
+  filter(!word %in% c(stop_words$word,"intro","chorus", "verse","em","wanna","gonna",
+                      "til","yo","i'ma", "ha", "ya", "gotta", "i", "gon", "goin", "sayin",
+                      "uh","y'all","ah","ooh","bout","outro","huh", "tryna","dr",
+                      "hey","la","da","haha","yeah")) %>%
+  plyr::mutate(word = str_extract(word, "[a-z']+")) %>%
+  na.omit()
+
+
+eminem_all_albums_freq <- eminem_all_albums_tidy  %>% count(word, sort=TRUE)
+head(eminem_all_albums_freq)
+
+eminem_all_albums_freq %>% 
+  filter(word %in% c("love", "time", "music", "crazy", "shit")) %>% 
+  ggplot(mapping = aes(x = word, y = n)) +
+  geom_col()
+
+#description of eminem over time
+#name eminem, slim, shady, mathers, marshall
+
+cols <- c("love" = "red", "time" = "red1", "music" = "red2",
+          "crazy" = "red3", "eminem" = "black", "dre" = "gray") 
+em1 <- 
+  eminem_1st_gen_freq %>% 
+  filter(word %in% c("eminem", "love", "time", "crazy", "music", "dre"))
+em1
+
+
+em1_bar <- em1 %>%
+    mutate(word = reorder(word, n)) %>% 
+    ggplot(mapping = aes(x = word, y = n, fill = word)) +
+    geom_col(show.legend = FALSE) +
+    scale_fill_manual(values = cols) +
+    theme_classic() +
+    labs(x = "1st Generation",
+         y = element_blank()) +
+    coord_cartesian(ylim = c(0,800))  +
+    theme(axis.text.x = element_blank(),
+          axis.ticks.x = element_blank(),
+          axis.line.y = element_blank(),
+          axis.text.y = element_blank(),
+          axis.ticks.y = element_blank())
+
+em1_bar
+
+em2 <- 
+  eminem_2nd_gen_freq %>% 
+  filter(word %in% c("eminem", "love", "time", "crazy", "music", "dre"))
+
+em2
+em2_bar <- em2 %>% 
+    mutate(word = reorder(word, n)) %>% 
+    ggplot(mapping = aes(x = word, y = n, fill = word)) +
+    geom_col(show.legend = FALSE) + 
+    scale_fill_manual(values = cols) +
+    theme_classic() +
+    labs(x = "2nd generation",
+         y = element_blank()) +
+    coord_cartesian(ylim = c(0,800)) +
+    theme(axis.text.x = element_blank(),
+          axis.ticks.x = element_blank(),
+          axis.line.y = element_blank(),
+          axis.text.y = element_blank(),
+        axis.ticks.y = element_blank())
+
+em3 <- 
+  eminem_3rd_gen_freq%>% 
+  filter(word %in% c("eminem", "love", "time", "crazy", "music", "dre"))
+
+em3
+
+em3_bar <- em3 %>% 
+    mutate(word = reorder(word, n)) %>% 
+    ggplot(mapping = aes(x = word, y = n, fill = word)) +
+    geom_col(show.legend = FALSE)  +
+    scale_fill_manual(values = cols) +
+    theme_classic() +
+    coord_cartesian(ylim = c(0,800)) +
+    labs(x = "3rd generation", 
+         y = element_blank()) +
+    theme(axis.text.x = element_blank(),
+          axis.ticks.x = element_blank(),
+          axis.text.y = element_blank(),
+          axis.ticks.y = element_blank(),
+          axis.line.y = element_blank())
+
+total_em <- 
+  eminem_all_albums_freq %>% 
+  filter(word %in% c("eminem", "love", "time", "crazy", "music", "dre"))
+total_em
+total_em_bar <- total_em %>% 
+    mutate(word = reorder(word, n)) %>% 
+    ggplot(mapping = aes(x = word, y = n, fill = word)) +
+    geom_col(show.legend = FALSE) +
+    scale_fill_manual(values = cols) +
+    coord_cartesian(ylim = c(0,800)) +
+    theme_classic() +
+    labs(title = "Mentions of self",
+         x = "All Albums",
+         y = "Word Count")+
+  theme(axis.text.x = element_blank(),
+        axis.ticks.x = element_blank())
+173+119+57+29+22+16
+total_em_bar
+
+gridExtra::grid.arrange(total_em_bar, em1_bar, em2_bar, em3_bar, nrow = 1)
+
+table1 <- c()
+
+
+table(eminem$Release_date)
+
+dates <- eminem %>% 
+  filter(grepl(".*([0-9]{4})", painting)) %>%
+  mutate(date = gsub(".*[a-z]|[[:punct:]]", "", painting)) %>% 
+  filter(! date %in% c("19111", "19131","19141", "19161", "19201",
+                       "207833", "207834"))
+#lexical diversity
+Year <- eminem_filtered %>% 
+  mutate(Year = sub(".*(\\d{4}).*", "\\1", Release_date))
+names(eminem_filtered)
+head(Year)
+
+Year$Year <- as.numeric(Year$Year)
+
+lexical_diversity_per_album<-Year %>%
+  unnest_tokens(word, Lyrics) %>%
+  group_by(Song_Name, Album_Name, Year) %>%
+  summarize(lex_diversity=n_distinct(word)) %>%
+  # mutate(album=reorder(album, album_year)) %>%
+  arrange(-lex_diversity) %>%
+  ungroup()
+
+head(lexical_diversity_per_album)
+
+# lex diversity plot
+diversity_graph <-   
+  lexical_diversity_per_album %>%
+  ggplot(mapping = aes(x = Year, y = lex_diversity)) +
+  geom_point(color = "red", size=4, alpha = .4, na.rm = TRUE) +
+  stat_smooth(color="black", se=FALSE, method="lm") +
+  #geom_smooth(mapping = aes(x=Year, y=lex_diversity), se=TRUE, color="blue", lwd=2) +
+  ggtitle("Lexical diversity") +
+  ylab("") + xlab("") +
+  theme_bw()
+
+?RColorBrewer
+
+#lexical density
+
+lexical_density_per_album <- Year %>%
+  unnest_tokens(word, Lyrics) %>%
+  group_by(Song_Name, Album_Name, Year) %>%
+  summarize(lex_density=n_distinct(word)/n()) %>%
+  arrange(-lex_density) %>%
+  ungroup()
+
+density_graph <-   
+  lexical_density_per_album %>%
+  ggplot(mapping= aes(x = Year, y = lex_density)) +
+  geom_point(color="black", alpha=0.4, size=4, position="jitter") +
+  stat_smooth(color="red", se=FALSE, method="lm") +
+  #geom_smooth(se=FALSE, color="blue", lwd=2) +
+  ggtitle("Lexical density") + xlab("") + ylab("") +
+  theme_bw()
+
+gridExtra::grid.arrange(diversity_graph, density_graph, nrow = 1)
+#neat word cloud
