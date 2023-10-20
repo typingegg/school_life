@@ -1,0 +1,134 @@
+surfer <- read.csv("SurferMicrobiomeDiversity.csv")
+#Mean, Median and Variance
+
+summary_table_surffrequency <- surfer %>%
+  group_by(surfer$surf_frequency) %>%
+  summarize(avg = mean(surfer$Shannon),
+            median = median(surfer$Shannon),
+            var = var(surfer$Shannon))
+
+summary_table_surffrequency
+
+#HISTOGRAM
+names(surfer)
+library(ggplot2)
+ggplot(data = surfer, mapping = aes(x = Shannon)) + geom_density()
+
+#DIVERSITY SHANNON IN SKIN
+plot(skin$NSpecies, skin$Shannon, pch=19,
+     main = "Figure 4. Shannon diversity index of surfers' skin, n=234",
+     xlab="N Species", ylab="Shannon Index", 
+     las = 1,
+     col="navyblue", ylim=c(0,7), xlim=c(0,2000))
+
+
+#METAGENOME SAMPLE COUNT
+barplot(table(surfer$scientific_name),
+        horiz = TRUE,
+        col = c("gray", "gray","gray", "gray", "gray", "navyblue", "gray"),
+        xlab = "Number of Samples",
+        xlim = c(0, 250),
+        main = "Figure 3. Collection of 234 samples from the skin metagenome (blue) compared to other metagenome sites",
+        names.arg = c("Eye","Gut","Ear", "Nose", "Mouth", "Skin", "Vagina"),
+        las = 2)
+
+pie(table(surfer$sample_type[which(surfer$scientific_name == "human skin metagenome")]),
+    col=brewer.pal(5, "Blues"),
+    main = "Figure 3. Sites sampled in skin",
+    radius =  )
+
+#Shannon
+boxplot(skin$Shannon~skin$sample_type,
+        main = "Figure 3. Shannon diversity index per skin site",
+        xlab = "",
+        ylab = "Shannon index",
+        las = 1,
+        ylim = c(0,7),
+        col = c("aliceblue"),
+        names= c("\nForehead\n(n=48)",
+                      "\nLeft Hand\n(n=49)",
+                      "\nLeft Leg\n(n=45)", 
+                      "\nRight Hand\n(n=1)", 
+                      "\nTorso\n(n=91)")
+)
+
+beeswarm(skin$Shannon~skin$sample_type,
+         col = c("navyblue"),
+         pch = 19,
+         add = TRUE
+         ) 
+
+#Simpson
+
+boxplot(skin$Simpson~skin$sample_type)
+beeswarm(skin$Simpson~skin$sample_type,
+         add = TRUE)
+plot(skin$NSpecies, skin$Simpson, pch=19)
+     
+        
+table(skin$sample_type)
+summary(skin$sample_type)
+summary(skin$sample_type=="Forehead")
+skin <- surfer[which(surfer$scientific_name=="human skin metagenome"),]
+
+
+library(plotrix)
+pie3D(surfer$scientific_name,
+      col=c("gray", "gray", "gray", "gray", "gray", "gray", "gray"),
+      labels = names(surfer$scientific_name),
+      labelcex = 1,
+      explode=0.1,
+      theta = 0.8,
+      main="3D Pie Chart")
+
+
+count(surfer$scientific_name)
+view(table(surfer$scientific_name))
+count(surfer$sample_type)
+
+table(surfer$scientific_name)
+skin <- surfer[which(surfer$scientific_name=="human skin metagenome"),]
+table(skin$scientific_name)
+
+mean(skin$Shannon)
+sd(skin$Shannon)
+summary(surf_frequency.mean)
+view(surf_frequency.mean <- aggregate(skin$Shannon, by=list(skin$surf_frequency),
+                                FUN=mean))
+
+view(surf_frequency.sd <- aggregate(skin$Shannon, by=list(skin$surf_frequency),
+                                 FUN=sd))
+surf_frequency.sd
+skin %>%
+  filter(Shannon < 2) %>%
+  select(Shannon, sample_type, surf_frequency, 
+         surf_weetsuit, surf_shower_frequency,
+         surf_board_type)%>%
+  view()
+
+boxplot(skin$sample_type~skin$Shannon)
+#SURF FREQUENCY
+barplot(surf_frequency.mean$x~surf_frequency.mean$Group.1[c(1,2,3,4,5)],
+        ylab="Shannon index mean",
+        ylim = c(0,4),
+        las = 1,
+        main="Figure 5. Mean Shannon diversity index between surf frequencies in skin", 
+        col=brewer.pal(5, "Blues"), 
+        xlab = "p-value = 0.187")
+
+
+
+boxplot(skin$Shannon~skin$surf_frequency,
+        xlab = "surf_frequency",
+        ylab = " ",
+        col = c("light gray", "dark gray"))
+
+summary(aov(skin$Shannon~skin$surf_frequency))
+#p = .187
+
+TukeyHSD(aov(skin$Shannon~skin$surf_frequency))
+
+count(is.na(skin$surf_frequency))
+
+display.brewer.all()
+
